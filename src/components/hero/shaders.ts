@@ -57,33 +57,42 @@ void main() {
   }
   col /= max(wSum, 0.001);
 
-  // Resting look = original photo (never leave the ending hotter than this)
+  // Resting look = original photo
   vec3 plate = col;
 
-  // Soft full-frame dawn: wide feathered wash, not a hard circle
+  // —— Expanding light ring: noticeable wash that sweeps outward ——
   vec2 origin = vec2(0.50, 0.44);
   float dist = length((v_uv - origin) * vec2(aspect, 1.0));
-  float reach = mix(0.28, 1.85, dawn);
-  float feather = mix(0.7, 1.25, dawn);
-  float lit = 1.0 - smoothstep(reach - feather, reach + feather * 0.25, dist);
-  lit = clamp(lit, 0.0, 1.0);
+  float cornerReach = length(vec2(0.62 * aspect, 0.62));
+  float radius = mix(0.06, cornerReach + 0.12, dawn);
+  float band = mix(0.1, 0.2, dawn);
 
-  vec3 dim = plate * vec3(0.5, 0.52, 0.56) * 0.4;
-  // Gentle mid breath (~+4%), back to 0% by the end — no eye-searing peak
+  // Already-lit disk inside the ring
+  float inside = 1.0 - smoothstep(radius - band * 0.65, radius + band * 0.15, dist);
+
+  // Soft bright annulus on the expanding front (the “wave of light”)
+  float ring = exp(-pow((dist - radius) / max(band * 0.55, 0.001), 2.0));
+  ring *= (1.0 - smoothstep(0.88, 1.0, dawn));
+
+  vec3 dim = plate * vec3(0.46, 0.49, 0.54) * 0.34;
+  // Mid breath a bit stronger than the calm pass (~+10% peak), then home to plate
   float breath = sin(dawn * 3.14159265);
-  float exposure = 1.0 + 0.04 * breath;
-  col = mix(dim, plate * exposure, lit);
+  float exposure = 1.0 + 0.1 * breath;
+  col = mix(dim, plate * exposure, clamp(inside, 0.0, 1.0));
 
-  // Quiet warm wash near the sun, tied to the same breath
-  float glowScale = mix(0.5, 1.05, dawn);
+  // Ring highlight — warm, readable, not a hard white edge
+  vec3 ringColor = vec3(1.0, 0.82, 0.55);
+  col += ringColor * ring * (0.22 + 0.1 * breath);
+
+  // Soft glow texture riding with the ring / center
+  float glowScale = mix(0.35, 0.9, dawn);
   vec2 glowUV = (uv - sunPos) / max(glowScale, 0.05) + 0.5;
   vec3 glowTex = texture(u_glow, clamp(glowUV, 0.0, 1.0)).rgb;
   float glowLum = max(glowTex.r, max(glowTex.g, glowTex.b));
-  float nearSun = exp(-dist * 2.4);
-  col += glowTex * glowLum * nearSun * 0.08 * breath * lit;
+  col += glowTex * glowLum * (0.16 * ring + 0.1 * breath * inside);
 
-  // Calm settle onto the true plate
-  col = mix(col, plate, smoothstep(0.68, 1.0, dawn));
+  // Settle to true plate brightness
+  col = mix(col, plate, smoothstep(0.78, 1.0, dawn));
 
   // Doorway aperture
   float slitX = mix(0.018, 1.55, open);

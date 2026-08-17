@@ -30,11 +30,11 @@ export function HeroScene() {
       return
     }
 
-    // black → open door → soft dawn wash across the frame → settle
-    const totalMs = 8800
+    // black → open door → expanding light ring → settle on photo
+    const totalMs = 9000
     const blackHold = 0.1
-    const openEnd = 0.45
-    const dawnStart = 0.34
+    const openEnd = 0.44
+    const dawnStart = 0.32
     const t0 = performance.now()
     let raf = 0
 
