@@ -6,6 +6,7 @@ import guilinTall from '@/assets/images/guilin-tall.jpg'
 import guilinWideDepth from '@/assets/images/guilin-wide-depth.png'
 import guilinTallDepth from '@/assets/images/guilin-tall-depth.png'
 import smokeAlpha from '@/assets/images/smoke-alpha.png'
+import sunGlow from '@/assets/images/sun-glow.png'
 
 export const images = {
   guilinWide,
@@ -13,4 +14,5 @@ export const images = {
   guilinWideDepth,
   guilinTallDepth,
   smokeAlpha,
+  sunGlow,
 } as const

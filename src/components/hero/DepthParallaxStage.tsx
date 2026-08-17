@@ -6,6 +6,7 @@ import { depthFrag, fullscreenVert } from './shaders'
 type Props = {
   mouse: { x: number; y: number }
   intro: number
+  sunrise: number
   reduced: boolean
 }
 
@@ -16,12 +17,13 @@ function pickSources(wide: boolean) {
 }
 
 /**
- * Full-viewport WebGL photo with depth-map parallax.
+ * Full-viewport WebGL photo with depth-map parallax + dawn lighting.
  */
-export function DepthParallaxStage({ mouse, intro, reduced }: Props) {
+export function DepthParallaxStage({ mouse, intro, sunrise, reduced }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const mouseRef = useRef(mouse)
   const introRef = useRef(intro)
+  const sunriseRef = useRef(sunrise)
 
   useEffect(() => {
     mouseRef.current = mouse
@@ -30,6 +32,10 @@ export function DepthParallaxStage({ mouse, intro, reduced }: Props) {
   useEffect(() => {
     introRef.current = intro
   }, [intro])
+
+  useEffect(() => {
+    sunriseRef.current = sunrise
+  }, [sunrise])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -47,6 +53,7 @@ export function DepthParallaxStage({ mouse, intro, reduced }: Props) {
     let program: WebGLProgram | null = null
     let colorTex: WebGLTexture | null = null
     let depthTex: WebGLTexture | null = null
+    let glowTex: WebGLTexture | null = null
     let currentWide: boolean | null = null
     let loading = false
 
@@ -65,11 +72,18 @@ export function DepthParallaxStage({ mouse, intro, reduced }: Props) {
 
     const uColor = gl.getUniformLocation(program, 'u_color')
     const uDepth = gl.getUniformLocation(program, 'u_depth')
+    const uGlow = gl.getUniformLocation(program, 'u_glow')
     const uMouse = gl.getUniformLocation(program, 'u_mouse')
     const uRes = gl.getUniformLocation(program, 'u_res')
     const uStrength = gl.getUniformLocation(program, 'u_strength')
     const uTime = gl.getUniformLocation(program, 'u_time')
     const uIntro = gl.getUniformLocation(program, 'u_intro')
+    const uSunrise = gl.getUniformLocation(program, 'u_sunrise')
+
+    loadImage(images.sunGlow).then((img) => {
+      if (disposed) return
+      glowTex = loadTexture(gl, img, 2)
+    })
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2)
@@ -107,19 +121,23 @@ export function DepthParallaxStage({ mouse, intro, reduced }: Props) {
       resize()
       loadForViewport()
 
-      if (program && colorTex && depthTex) {
+      if (program && colorTex && depthTex && glowTex) {
         gl.useProgram(program)
         gl.activeTexture(gl.TEXTURE0)
         gl.bindTexture(gl.TEXTURE_2D, colorTex)
         gl.activeTexture(gl.TEXTURE1)
         gl.bindTexture(gl.TEXTURE_2D, depthTex)
+        gl.activeTexture(gl.TEXTURE2)
+        gl.bindTexture(gl.TEXTURE_2D, glowTex)
         gl.uniform1i(uColor, 0)
         gl.uniform1i(uDepth, 1)
+        gl.uniform1i(uGlow, 2)
         gl.uniform2f(uMouse, mouseRef.current.x, mouseRef.current.y)
         gl.uniform2f(uRes, canvas.width, canvas.height)
         gl.uniform1f(uStrength, reduced ? 0.01 : 0.055)
         gl.uniform1f(uTime, (now - start) / 1000)
         gl.uniform1f(uIntro, introRef.current)
+        gl.uniform1f(uSunrise, sunriseRef.current)
         gl.drawArrays(gl.TRIANGLES, 0, 6)
       }
 
@@ -140,6 +158,7 @@ export function DepthParallaxStage({ mouse, intro, reduced }: Props) {
       window.removeEventListener('resize', onResize)
       if (colorTex) gl.deleteTexture(colorTex)
       if (depthTex) gl.deleteTexture(depthTex)
+      if (glowTex) gl.deleteTexture(glowTex)
       if (program) gl.deleteProgram(program)
       if (buffer) gl.deleteBuffer(buffer)
     }

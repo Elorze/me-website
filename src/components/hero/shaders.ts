@@ -8,17 +8,19 @@ void main() {
 }
 `
 
-/** 2.5D depth parallax + soft vignette on a photo + depth map */
+/** 2.5D depth parallax + doorway open + soft full-frame dawn */
 export const depthFrag = `#version 300 es
 precision highp float;
 
 uniform sampler2D u_color;
 uniform sampler2D u_depth;
+uniform sampler2D u_glow;
 uniform vec2 u_mouse;
 uniform vec2 u_res;
 uniform float u_strength;
 uniform float u_time;
 uniform float u_intro;
+uniform float u_sunrise;
 
 in vec2 v_uv;
 out vec4 outColor;
@@ -28,46 +30,77 @@ float sampleDepth(vec2 uv) {
 }
 
 void main() {
-  vec2 uv = v_uv;
-  // Cover-fit letterbox against texture aspect handled in JS via UV scale;
-  // here uv is already mapped to the visible plane.
+  float aspect = u_res.x / max(u_res.y, 1.0);
+  float open = clamp(u_intro, 0.0, 1.0);
+  float dawn = clamp(u_sunrise, 0.0, 1.0);
+
+  vec2 gate = vec2(0.40, 0.46);
+  vec2 sunPos = vec2(0.52, 0.42);
+
+  float zoom = mix(1.22, 1.0, open);
+  vec2 uv = (v_uv - gate) / zoom + gate;
 
   float d = sampleDepth(uv);
-  // Near (white) moves more; far (black) stays put
-  vec2 parallax = u_mouse * (d - 0.08) * u_strength;
+  vec2 parallax = u_mouse * (d - 0.08) * u_strength * open;
 
-  // Multi-tap along depth for fewer tears
   vec3 col = vec3(0.0);
+  float wSum = 0.0;
   const int STEPS = 8;
   for (int i = 0; i < STEPS; i++) {
     float t = float(i) / float(STEPS - 1);
     vec2 suv = uv + parallax * t;
     float sd = sampleDepth(suv);
-    // Prefer samples whose depth matches the travel amount
     float w = 1.0 - abs(sd - mix(d, 1.0, t)) * 1.6;
     w = max(w, 0.05);
     col += texture(u_color, clamp(suv, 0.0, 1.0)).rgb * w;
+    wSum += w;
   }
-  col /= float(STEPS) * 0.72;
+  col /= max(wSum, 0.001);
 
-  // Gentle breathing scale on intro settle
-  float breathe = 1.0 + sin(u_time * 0.15) * 0.004 * u_intro;
-  vec2 centered = (uv - 0.5) / breathe + 0.5;
-  col = mix(col, texture(u_color, clamp(centered + parallax * 0.35, 0.0, 1.0)).rgb, 0.22);
+  // Resting look = original photo (never leave the ending hotter than this)
+  vec3 plate = col;
 
-  // Cinematic vignette
-  float vig = smoothstep(1.15, 0.35, length((uv - 0.5) * vec2(1.15, 1.0)));
-  col *= mix(0.72, 1.0, vig);
+  // Soft full-frame dawn: wide feathered wash, not a hard circle
+  vec2 origin = vec2(0.50, 0.44);
+  float dist = length((v_uv - origin) * vec2(aspect, 1.0));
+  float reach = mix(0.28, 1.85, dawn);
+  float feather = mix(0.7, 1.25, dawn);
+  float lit = 1.0 - smoothstep(reach - feather, reach + feather * 0.25, dist);
+  lit = clamp(lit, 0.0, 1.0);
 
-  // Warm lift near sun region
-  float sun = exp(-length((uv - vec2(0.52, 0.42)) * vec2(1.4, 1.8)) * 3.2);
-  col += vec3(1.0, 0.55, 0.18) * sun * 0.06 * u_intro;
+  vec3 dim = plate * vec3(0.5, 0.52, 0.56) * 0.4;
+  // Gentle mid breath (~+4%), back to 0% by the end — no eye-searing peak
+  float breath = sin(dawn * 3.14159265);
+  float exposure = 1.0 + 0.04 * breath;
+  col = mix(dim, plate * exposure, lit);
+
+  // Quiet warm wash near the sun, tied to the same breath
+  float glowScale = mix(0.5, 1.05, dawn);
+  vec2 glowUV = (uv - sunPos) / max(glowScale, 0.05) + 0.5;
+  vec3 glowTex = texture(u_glow, clamp(glowUV, 0.0, 1.0)).rgb;
+  float glowLum = max(glowTex.r, max(glowTex.g, glowTex.b));
+  float nearSun = exp(-dist * 2.4);
+  col += glowTex * glowLum * nearSun * 0.08 * breath * lit;
+
+  // Calm settle onto the true plate
+  col = mix(col, plate, smoothstep(0.68, 1.0, dawn));
+
+  // Doorway aperture
+  float slitX = mix(0.018, 1.55, open);
+  float slitY = mix(0.12, 1.65, open);
+  vec2 p = (v_uv - gate) * vec2(aspect, 1.0);
+  float doorDist = length(p / vec2(slitX, slitY));
+  float aperture = smoothstep(1.05, 0.62, doorDist);
+
+  float wake = smoothstep(0.0, 0.12, open);
+  float reveal = aperture * wake;
+  col = mix(vec3(0.0), col, reveal);
 
   outColor = vec4(col, 1.0);
 }
 `
 
-/** Volumetric-looking fog that parts over time + reacts to pointer */
+/** Kept for a later fog pass — not used in the current hero timeline. */
 export const fogFrag = `#version 300 es
 precision highp float;
 
@@ -75,7 +108,7 @@ uniform sampler2D u_smoke;
 uniform vec2 u_mouse;
 uniform vec2 u_res;
 uniform float u_time;
-uniform float u_clear; // 0 = full fog, 1 = clear
+uniform float u_clear;
 
 in vec2 v_uv;
 out vec4 outColor;
@@ -88,24 +121,20 @@ void main() {
   vec2 uv = v_uv;
   float aspect = u_res.x / max(u_res.y, 1.0);
 
-  // Dual drifting smoke layers
   vec2 flowA = vec2(u_time * 0.018, -u_time * 0.012);
   vec2 flowB = vec2(-u_time * 0.014, u_time * 0.01);
   float s1 = texture(u_smoke, fract(uv * vec2(1.15, 1.0) + flowA)).r;
   float s2 = texture(u_smoke, fract(uv * vec2(1.6, 1.25) * 0.85 + flowB + 0.37)).r;
   float smoke = pow(clamp(s1 * 0.65 + s2 * 0.55, 0.0, 1.0), 0.92);
 
-  // Soft noise fill so gaps still feel foggy at start
   float n = hash(uv * u_res * 0.35 + u_time * 0.2);
   smoke = mix(smoke, max(smoke, 0.55 + n * 0.15), 0.35);
 
-  // Radial parting from slightly above center (sun-ish)
   vec2 center = vec2(0.5, 0.42);
   vec2 d = (uv - center) * vec2(aspect, 1.0);
   float radial = length(d);
   float part = smoothstep(0.15 + u_clear * 1.35, 0.0 + u_clear * 0.2, radial);
 
-  // Pointer locally clears fog
   vec2 m = (u_mouse * 0.5 + 0.5);
   float pointerClear = smoothstep(0.28, 0.0, length((uv - m) * vec2(aspect, 1.0)));
 
@@ -115,11 +144,9 @@ void main() {
   density *= (1.0 - u_clear * 0.92);
   density = clamp(density, 0.0, 1.0);
 
-  // Warm fog tint matching Guilin sunrise
   vec3 fogColor = mix(vec3(0.95, 0.78, 0.55), vec3(1.0, 0.92, 0.82), smoke);
   float alpha = density * mix(0.98, 0.12, u_clear);
 
-  // Edge hold so the "door" feeling remains a moment longer
   float edge = smoothstep(0.55, 1.0, max(abs(uv.x - 0.5) * 1.6, abs(uv.y - 0.5) * 1.2));
   alpha = max(alpha, edge * (1.0 - u_clear) * 0.35);
 
