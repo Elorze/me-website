@@ -1,0 +1,122 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-ink: #0a0604;
+  --color-ember: #e85d04;
+  --color-mist: #f4a261;
+  --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: var(--color-ink);
+    color: white;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body.cursor-none,
+  body.cursor-none * {
+    cursor: none !important;
+  }
+}
+
+@layer utilities {
+  .ken-burns {
+    animation: ken-burns 48s ease-in-out infinite alternate;
+    will-change: transform;
+  }
+
+  .mist-drift-a {
+    animation: mist-drift-a 28s ease-in-out infinite alternate;
+    will-change: transform, opacity;
+  }
+
+  .mist-drift-b {
+    animation: mist-drift-b 36s ease-in-out infinite alternate;
+    will-change: transform, opacity;
+  }
+
+  .sun-glow {
+    animation: sun-glow 10s ease-in-out infinite alternate;
+    will-change: opacity, transform;
+  }
+
+  .grain {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
+    opacity: 0.07;
+    mix-blend-mode: overlay;
+    pointer-events: none;
+  }
+}
+
+@keyframes ken-burns {
+  0% {
+    transform: scale(1.08) translate3d(-1.2%, 0.6%, 0);
+  }
+  50% {
+    transform: scale(1.14) translate3d(1%, -0.8%, 0);
+  }
+  100% {
+    transform: scale(1.1) translate3d(-0.4%, 1%, 0);
+  }
+}
+
+@keyframes mist-drift-a {
+  0% {
+    transform: translate3d(-4%, 2%, 0) scale(1.05);
+    opacity: 0.35;
+  }
+  100% {
+    transform: translate3d(5%, -3%, 0) scale(1.18);
+    opacity: 0.55;
+  }
+}
+
+@keyframes mist-drift-b {
+  0% {
+    transform: translate3d(3%, -2%, 0) scale(1.1);
+    opacity: 0.22;
+  }
+  100% {
+    transform: translate3d(-6%, 4%, 0) scale(1.22);
+    opacity: 0.42;
+  }
+}
+
+@keyframes sun-glow {
+  0% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.72;
+    transform: scale(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ken-burns,
+  .mist-drift-a,
+  .mist-drift-b,
+  .sun-glow {
+    animation: none !important;
+  }
+}
