@@ -16,7 +16,8 @@ function easeDawnRing(t: number) {
 
 /**
  * Immersive Guilin hero:
- * brief black → doorway open + light ring expand in sync → photo brightness.
+ * brief black → doorway shadow open AND light-ring expand start together
+ * (two different visual forms, synced in time) → settle on photo.
  */
 export function HeroScene() {
   const reduced = usePrefersReducedMotion()
@@ -36,18 +37,25 @@ export function HeroScene() {
       return
     }
 
-    // Compact open: doorway shadow and center ring expand together
-    const totalMs = 7200
-    const blackHold = 0.05
+    // Two forms, one clock:
+    // - intro  → black doorway aperture (shader slits)
+    // - sunrise → warm expanding light ring (shader dawn)
+    // They START together; each keeps its own easing / duration.
+    const totalMs = 8200
+    const blackHold = 0.06
+    const openEnd = 0.48
+    const dawnStart = blackHold
     const t0 = performance.now()
     let raf = 0
 
     const tick = (now: number) => {
       const t = Math.min(1, (now - t0) / totalMs)
-      const play = Math.min(1, Math.max(0, (t - blackHold) / (1 - blackHold)))
 
-      setIntro(easeInOutCubic(play))
-      setSunrise(easeDawnRing(play))
+      const openT = Math.min(1, Math.max(0, (t - blackHold) / (openEnd - blackHold)))
+      setIntro(easeInOutCubic(openT))
+
+      const dawnT = Math.min(1, Math.max(0, (t - dawnStart) / (1 - dawnStart)))
+      setSunrise(easeDawnRing(dawnT))
 
       if (t < 1) raf = requestAnimationFrame(tick)
     }
@@ -66,7 +74,7 @@ export function HeroScene() {
           reduced={reduced}
         />
       </div>
-      <SceneCursor enabled={!reduced && intro > 0.28} />
+      <SceneCursor enabled={!reduced && intro > 0.35} />
     </section>
   )
 }
