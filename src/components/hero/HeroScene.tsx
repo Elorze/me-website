@@ -8,9 +8,15 @@ function easeInOutCubic(t: number) {
   return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2
 }
 
+/** Leave the tiny center ring quickly; keep mid/late sweep pace similar. */
+function easeDawnRing(t: number) {
+  const eased = easeInOutCubic(t)
+  return Math.pow(eased, 0.58)
+}
+
 /**
  * Immersive Guilin hero:
- * black hold → doorway aperture → soft full-frame dawn → photo brightness.
+ * brief black → doorway open + light ring expand in sync → photo brightness.
  */
 export function HeroScene() {
   const reduced = usePrefersReducedMotion()
@@ -30,22 +36,18 @@ export function HeroScene() {
       return
     }
 
-    // black → open door → expanding light ring → settle on photo
-    const totalMs = 9000
-    const blackHold = 0.1
-    const openEnd = 0.44
-    const dawnStart = 0.32
+    // Compact open: doorway shadow and center ring expand together
+    const totalMs = 7200
+    const blackHold = 0.05
     const t0 = performance.now()
     let raf = 0
 
     const tick = (now: number) => {
       const t = Math.min(1, (now - t0) / totalMs)
+      const play = Math.min(1, Math.max(0, (t - blackHold) / (1 - blackHold)))
 
-      const openT = Math.min(1, Math.max(0, (t - blackHold) / (openEnd - blackHold)))
-      setIntro(easeInOutCubic(openT))
-
-      const dawnT = Math.min(1, Math.max(0, (t - dawnStart) / (1 - dawnStart)))
-      setSunrise(easeInOutCubic(dawnT))
+      setIntro(easeInOutCubic(play))
+      setSunrise(easeDawnRing(play))
 
       if (t < 1) raf = requestAnimationFrame(tick)
     }
@@ -64,7 +66,7 @@ export function HeroScene() {
           reduced={reduced}
         />
       </div>
-      <SceneCursor enabled={!reduced && intro > 0.35} />
+      <SceneCursor enabled={!reduced && intro > 0.28} />
     </section>
   )
 }

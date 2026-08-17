@@ -64,7 +64,7 @@ void main() {
   vec2 origin = vec2(0.50, 0.44);
   float dist = length((v_uv - origin) * vec2(aspect, 1.0));
   float cornerReach = length(vec2(0.62 * aspect, 0.62));
-  float radius = mix(0.06, cornerReach + 0.12, dawn);
+  float radius = mix(0.1, cornerReach + 0.12, dawn);
   float band = mix(0.1, 0.2, dawn);
 
   // Already-lit disk inside the ring
