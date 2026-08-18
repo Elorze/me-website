@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { metaloftDeck } from '@/content/metaloftDeck'
 import { displayFont, ui } from '@/content/theme'
 import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
@@ -22,11 +22,13 @@ const ghost: CSSProperties = {
 
 /**
  * Brand deck as a page — no download, browse like slides.
+ * Header / body / footer are stacked so titles stay visible and nav is never covered.
  */
 export function ProjectIntro({ open, onClose }: Props) {
   const reduced = usePrefersReducedMotion()
   const slides = metaloftDeck.slides
   const [index, setIndex] = useState(0)
+  const scrollRef = useRef<HTMLDivElement>(null)
   const slide = slides[index]
 
   const go = useCallback(
@@ -39,6 +41,10 @@ export function ProjectIntro({ open, onClose }: Props) {
   useEffect(() => {
     if (open) setIndex(0)
   }, [open])
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0 })
+  }, [index, open])
 
   useEffect(() => {
     if (!open) return
@@ -66,10 +72,13 @@ export function ProjectIntro({ open, onClose }: Props) {
 
   const n = String(index + 1).padStart(2, '0')
   const total = String(slides.length).padStart(2, '0')
+  const imageCount = slide.images?.length ?? 0
+  const imageMaxH =
+    imageCount === 1 ? 'min(34vh, 280px)' : imageCount === 2 ? 'min(30vh, 240px)' : 'min(22vh, 160px)'
 
   return (
     <section
-      className="absolute inset-0 z-40 overflow-hidden"
+      className="absolute inset-0 z-40 flex flex-col overflow-hidden"
       style={{ background: ui.ink }}
       aria-label="METALOFT 项目介绍"
     >
@@ -83,52 +92,54 @@ export function ProjectIntro({ open, onClose }: Props) {
       />
       <div className="grain absolute inset-0 opacity-[0.04]" aria-hidden />
 
-      <header className="relative z-10 flex items-center justify-between px-6 pt-7 sm:px-10 sm:pt-9 lg:px-14">
-        <button
-          type="button"
-          className="ui-interactive transition-opacity hover:opacity-80"
-          style={ghost}
-          onClick={onClose}
-        >
-          返回
-        </button>
-        <p
-          className="m-0 hidden sm:block"
+      <header className="relative z-10 shrink-0 px-6 pt-6 sm:px-10 sm:pt-8 lg:px-14">
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            className="ui-interactive transition-opacity hover:opacity-80"
+            style={ghost}
+            onClick={onClose}
+          >
+            返回
+          </button>
+          <p
+            className="m-0 hidden sm:block"
+            style={{
+              fontFamily: displayFont,
+              fontSize: '0.92rem',
+              color: ui.goldSoft,
+              letterSpacing: '0.18em',
+            }}
+          >
+            {metaloftDeck.brand}
+            <span style={{ margin: '0 0.5em', opacity: 0.45 }}>/</span>
+            项目介绍
+          </p>
+          <p
+            className="m-0"
+            style={{
+              fontFamily: displayFont,
+              fontSize: '0.85rem',
+              color: ui.goldSoft,
+              letterSpacing: '0.18em',
+            }}
+          >
+            {n} / {total}
+          </p>
+        </div>
+        <div
+          className="mt-5 h-px"
           style={{
-            fontFamily: displayFont,
-            fontSize: '0.92rem',
-            color: ui.goldSoft,
-            letterSpacing: '0.18em',
+            background: `linear-gradient(90deg, ${ui.goldLine}, transparent)`,
           }}
-        >
-          {metaloftDeck.brand}
-          <span style={{ margin: '0 0.5em', opacity: 0.45 }}>/</span>
-          项目介绍
-        </p>
-        <p
-          className="m-0"
-          style={{
-            fontFamily: displayFont,
-            fontSize: '0.85rem',
-            color: ui.goldSoft,
-            letterSpacing: '0.18em',
-          }}
-        >
-          {n} / {total}
-        </p>
+          aria-hidden
+        />
       </header>
 
       <div
-        className="relative mx-6 mt-5 h-px sm:mx-10 lg:mx-14"
-        style={{
-          background: `linear-gradient(90deg, ${ui.goldLine}, transparent)`,
-        }}
-        aria-hidden
-      />
-
-      <div
+        ref={scrollRef}
         key={index}
-        className="deck-scroll relative z-10 mx-auto flex h-[calc(100%-8.5rem)] w-full max-w-[1180px] flex-col justify-center overflow-y-auto px-6 py-6 sm:px-10 lg:px-14"
+        className="deck-scroll relative z-10 mx-auto min-h-0 w-full max-w-[1180px] flex-1 overflow-y-auto px-6 py-5 sm:px-10 lg:px-14"
         style={{
           animation: reduced
             ? undefined
@@ -151,8 +162,8 @@ export function ProjectIntro({ open, onClose }: Props) {
           style={{
             fontFamily: displayFont,
             fontSize: slide.closing
-              ? 'clamp(1.7rem, 3.6vw, 2.8rem)'
-              : 'clamp(1.45rem, 3vw, 2.2rem)',
+              ? 'clamp(1.55rem, 3.2vw, 2.4rem)'
+              : 'clamp(1.35rem, 2.6vw, 2rem)',
             fontWeight: 400,
             color: ui.ivory,
             letterSpacing: '0.06em',
@@ -163,13 +174,13 @@ export function ProjectIntro({ open, onClose }: Props) {
         </h2>
         {slide.lead && (
           <p
-            className="m-0 mb-6 max-w-2xl"
+            className="m-0 mb-5 max-w-2xl"
             style={{
               fontFamily: displayFont,
-              fontSize: '0.95rem',
+              fontSize: '0.92rem',
               color: ui.ivoryMuted,
               letterSpacing: '0.04em',
-              lineHeight: 1.85,
+              lineHeight: 1.8,
             }}
           >
             {slide.lead}
@@ -181,10 +192,10 @@ export function ProjectIntro({ open, onClose }: Props) {
             className="m-0 mb-3 max-w-2xl"
             style={{
               fontFamily: displayFont,
-              fontSize: '0.95rem',
+              fontSize: '0.92rem',
               color: ui.ivoryMuted,
               letterSpacing: '0.04em',
-              lineHeight: 1.85,
+              lineHeight: 1.8,
             }}
           >
             {line}
@@ -193,7 +204,7 @@ export function ProjectIntro({ open, onClose }: Props) {
 
         {slide.columns && (
           <div
-            className="mt-2 grid gap-4"
+            className="mt-2 grid gap-3"
             style={{
               gridTemplateColumns: `repeat(auto-fit, minmax(160px, 1fr))`,
             }}
@@ -201,14 +212,14 @@ export function ProjectIntro({ open, onClose }: Props) {
             {slide.columns.map((col) => (
               <div
                 key={col.heading}
-                className="px-4 py-4"
+                className="px-4 py-3.5"
                 style={{
                   border: `1px solid ${ui.goldLine}`,
                   background: 'rgba(255,252,245,0.02)',
                 }}
               >
                 <p
-                  className="m-0 mb-3"
+                  className="m-0 mb-2.5"
                   style={{
                     fontFamily: displayFont,
                     color: ui.goldSoft,
@@ -222,12 +233,12 @@ export function ProjectIntro({ open, onClose }: Props) {
                   {col.items.map((item) => (
                     <li
                       key={item}
-                      className="mb-2"
+                      className="mb-1.5"
                       style={{
                         fontFamily: displayFont,
                         color: ui.ivoryMuted,
-                        fontSize: '0.86rem',
-                        lineHeight: 1.65,
+                        fontSize: '0.84rem',
+                        lineHeight: 1.6,
                         letterSpacing: '0.03em',
                       }}
                     >
@@ -241,16 +252,16 @@ export function ProjectIntro({ open, onClose }: Props) {
         )}
 
         {slide.bullets && (
-          <ul className="m-0 mb-5 max-w-2xl list-none p-0">
+          <ul className="m-0 mb-4 max-w-2xl list-none p-0">
             {slide.bullets.map((item) => (
               <li
                 key={item}
-                className="mb-2.5 flex gap-3"
+                className="mb-2 flex gap-3"
                 style={{
                   fontFamily: displayFont,
                   color: ui.ivoryMuted,
-                  fontSize: '0.92rem',
-                  lineHeight: 1.75,
+                  fontSize: '0.9rem',
+                  lineHeight: 1.7,
                   letterSpacing: '0.03em',
                 }}
               >
@@ -263,12 +274,12 @@ export function ProjectIntro({ open, onClose }: Props) {
 
         {slide.images && slide.images.length > 0 && (
           <div
-            className="mt-3 grid gap-3"
+            className="mt-2 grid gap-3"
             style={{
               gridTemplateColumns:
-                slide.images.length === 1
+                imageCount === 1
                   ? '1fr'
-                  : slide.images.length === 2
+                  : imageCount === 2
                     ? '1fr 1fr'
                     : 'repeat(4, minmax(0, 1fr))',
             }}
@@ -280,7 +291,7 @@ export function ProjectIntro({ open, onClose }: Props) {
                   style={{
                     background: ui.inkRaised,
                     boxShadow: 'inset 0 0 0 1px rgba(245, 236, 220, 0.08)',
-                    maxHeight: slide.images!.length === 1 ? '42vh' : '28vh',
+                    maxHeight: imageMaxH,
                   }}
                 >
                   <img
@@ -288,7 +299,7 @@ export function ProjectIntro({ open, onClose }: Props) {
                     alt={img.caption ?? ''}
                     className="h-full w-full object-cover"
                     style={{
-                      maxHeight: slide.images!.length === 1 ? '42vh' : '28vh',
+                      maxHeight: imageMaxH,
                       filter: 'saturate(0.92) contrast(1.04)',
                     }}
                   />
@@ -313,7 +324,7 @@ export function ProjectIntro({ open, onClose }: Props) {
 
         {slide.note && (
           <p
-            className="m-0 mt-6"
+            className="m-0 mt-5"
             style={{
               fontFamily: displayFont,
               fontSize: '0.82rem',
@@ -327,11 +338,20 @@ export function ProjectIntro({ open, onClose }: Props) {
         )}
       </div>
 
-      <footer className="absolute bottom-5 left-0 right-0 z-20 flex items-center justify-center gap-4">
+      <footer
+        className="relative z-20 shrink-0 flex items-center justify-center gap-4 px-6 py-4 sm:px-10"
+        style={{
+          borderTop: `1px solid ${ui.goldLine}`,
+          background: 'linear-gradient(180deg, rgba(10,6,4,0.55) 0%, rgba(10,6,4,0.96) 40%)',
+        }}
+      >
         <button
           type="button"
           className="ui-interactive transition-opacity hover:opacity-80 disabled:opacity-30"
-          style={ghost}
+          style={{
+            ...ghost,
+            background: 'rgba(10, 6, 4, 0.85)',
+          }}
           disabled={index === 0}
           onClick={() => go(-1)}
         >
@@ -340,7 +360,10 @@ export function ProjectIntro({ open, onClose }: Props) {
         <button
           type="button"
           className="ui-interactive transition-opacity hover:opacity-80 disabled:opacity-30"
-          style={ghost}
+          style={{
+            ...ghost,
+            background: 'rgba(10, 6, 4, 0.85)',
+          }}
           disabled={index === slides.length - 1}
           onClick={() => go(1)}
         >
