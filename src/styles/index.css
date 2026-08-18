@@ -1,11 +1,22 @@
 @import 'tailwindcss';
 
+/* Local subset: 云展 / 项目经历 — Ma Shan Zheng (brush, readable) */
+@font-face {
+  font-family: 'Ma Shan Zheng';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/ma-shan-zheng-subset.woff2') format('woff2');
+  unicode-range: U+4E91, U+5C55, U+9879, U+76EE, U+7ECF, U+5386;
+}
+
 @theme {
   --color-ink: #0a0604;
   --color-ember: #e85d04;
   --color-mist: #f4a261;
   --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'PingFang SC',
     'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --font-display: 'Ma Shan Zheng', 'KaiTi', 'STKaiti', cursive;
 }
 
 @layer base {
@@ -34,6 +45,11 @@
   body.cursor-none,
   body.cursor-none * {
     cursor: none !important;
+  }
+
+  body.cursor-none .projects-entry,
+  body.cursor-none .projects-entry * {
+    cursor: pointer !important;
   }
 }
 

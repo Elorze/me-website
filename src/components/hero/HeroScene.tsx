@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { usePointerParallax } from '@/lib/hooks/usePointerParallax'
 import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
 import { DepthParallaxStage } from './DepthParallaxStage'
+import { ProjectsEntry } from './ProjectsEntry'
 import { SceneCursor } from './SceneCursor'
 
 function easeInOutCubic(t: number) {
@@ -16,14 +17,14 @@ function easeDawnRing(t: number) {
 
 /**
  * Immersive Guilin hero:
- * brief black → doorway shadow open AND light-ring expand start together
- * (two different visual forms, synced in time) → settle on photo.
+ * brief black → doorway + light ring → quiet projects entry.
  */
 export function HeroScene() {
   const reduced = usePrefersReducedMotion()
   const parallax = usePointerParallax({ strength: 1, ease: 0.07 })
   const [intro, setIntro] = useState(reduced ? 1 : 0)
   const [sunrise, setSunrise] = useState(reduced ? 1 : 0)
+  const [entryVisible, setEntryVisible] = useState(reduced)
 
   const mouse = useMemo(
     () => ({ x: parallax.x, y: -parallax.y }),
@@ -34,19 +35,18 @@ export function HeroScene() {
     if (reduced) {
       setIntro(1)
       setSunrise(1)
+      setEntryVisible(true)
       return
     }
 
-    // Two forms, one clock:
-    // - intro  → black doorway aperture (shader slits)
-    // - sunrise → warm expanding light ring (shader dawn)
-    // They START together; each keeps its own easing / duration.
     const totalMs = 8200
     const blackHold = 0.06
     const openEnd = 0.48
     const dawnStart = blackHold
     const t0 = performance.now()
     let raf = 0
+    let entryTimer: number | undefined
+    let entryArmed = false
 
     const tick = (now: number) => {
       const t = Math.min(1, (now - t0) / totalMs)
@@ -55,13 +55,22 @@ export function HeroScene() {
       setIntro(easeInOutCubic(openT))
 
       const dawnT = Math.min(1, Math.max(0, (t - dawnStart) / (1 - dawnStart)))
-      setSunrise(easeDawnRing(dawnT))
+      const dawn = easeDawnRing(dawnT)
+      setSunrise(dawn)
+
+      if (!entryArmed && dawn >= 0.92) {
+        entryArmed = true
+        entryTimer = window.setTimeout(() => setEntryVisible(true), 420)
+      }
 
       if (t < 1) raf = requestAnimationFrame(tick)
     }
 
     raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
+    return () => {
+      cancelAnimationFrame(raf)
+      if (entryTimer !== undefined) window.clearTimeout(entryTimer)
+    }
   }, [reduced])
 
   return (
@@ -74,6 +83,7 @@ export function HeroScene() {
           reduced={reduced}
         />
       </div>
+      <ProjectsEntry visible={entryVisible} />
       <SceneCursor enabled={!reduced && intro > 0.35} />
     </section>
   )

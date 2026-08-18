@@ -4,5 +4,7 @@
  */
 export const site = {
   lang: 'zh-CN',
-  title: '首页',
+  title: '云展',
+  name: '云展',
+  projectsLabel: '项目经历',
 } as const
