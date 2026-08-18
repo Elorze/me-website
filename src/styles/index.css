@@ -1,0 +1,197 @@
+@import 'tailwindcss';
+
+/* Local subset: 云展 / 项目经历 — Ma Shan Zheng (brush, readable) */
+@font-face {
+  font-family: 'Ma Shan Zheng';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/ma-shan-zheng-subset.woff2') format('woff2');
+  unicode-range: U+4E91, U+5C55, U+9879, U+76EE, U+7ECF, U+5386;
+}
+
+@theme {
+  --color-ink: #0a0604;
+  --color-ember: #e85d04;
+  --color-mist: #f4a261;
+  --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --font-display: 'Ma Shan Zheng', 'KaiTi', 'STKaiti', cursive;
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: var(--color-ink);
+    color: white;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body.cursor-none,
+  body.cursor-none * {
+    cursor: none !important;
+  }
+
+  body.cursor-none .projects-entry,
+  body.cursor-none .projects-entry *,
+  body.cursor-none .ui-interactive,
+  body.cursor-none .ui-interactive * {
+    cursor: pointer !important;
+  }
+}
+
+@layer utilities {
+  .ken-burns {
+    animation: ken-burns 48s ease-in-out infinite alternate;
+    will-change: transform;
+  }
+
+  .mist-drift-a {
+    animation: mist-drift-a 28s ease-in-out infinite alternate;
+    will-change: transform, opacity;
+  }
+
+  .mist-drift-b {
+    animation: mist-drift-b 36s ease-in-out infinite alternate;
+    will-change: transform, opacity;
+  }
+
+  .sun-glow {
+    animation: sun-glow 10s ease-in-out infinite alternate;
+    will-change: opacity, transform;
+  }
+
+  .grain {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
+    opacity: 0.07;
+    mix-blend-mode: overlay;
+    pointer-events: none;
+  }
+
+  .deck-scroll {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .deck-scroll::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+}
+
+@keyframes ken-burns {
+  0% {
+    transform: scale(1.08) translate3d(-1.2%, 0.6%, 0);
+  }
+  50% {
+    transform: scale(1.14) translate3d(1%, -0.8%, 0);
+  }
+  100% {
+    transform: scale(1.1) translate3d(-0.4%, 1%, 0);
+  }
+}
+
+@keyframes mist-drift-a {
+  0% {
+    transform: translate3d(-4%, 2%, 0) scale(1.05);
+    opacity: 0.35;
+  }
+  100% {
+    transform: translate3d(5%, -3%, 0) scale(1.18);
+    opacity: 0.55;
+  }
+}
+
+@keyframes mist-drift-b {
+  0% {
+    transform: translate3d(3%, -2%, 0) scale(1.1);
+    opacity: 0.22;
+  }
+  100% {
+    transform: translate3d(-6%, 4%, 0) scale(1.22);
+    opacity: 0.42;
+  }
+}
+
+@keyframes sun-glow {
+  0% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.72;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes archive-media-in {
+  from {
+    opacity: 0;
+    transform: scale(1.045);
+    filter: saturate(0.9) contrast(1.05) brightness(0.7);
+  }
+  to {
+    opacity: 0.9;
+    transform: scale(1);
+    filter: saturate(0.9) contrast(1.05) brightness(0.92);
+  }
+}
+
+@keyframes archive-copy-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ken-burns,
+  .mist-drift-a,
+  .mist-drift-b,
+  .sun-glow {
+    animation: none !important;
+  }
+
+  @keyframes archive-media-in {
+    from {
+      opacity: 0.88;
+      transform: none;
+    }
+    to {
+      opacity: 0.88;
+      transform: none;
+    }
+  }
+
+  @keyframes archive-copy-in {
+    from {
+      opacity: 1;
+      transform: none;
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
