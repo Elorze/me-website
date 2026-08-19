@@ -84,12 +84,12 @@ export function ProjectIntro({ open, onClose, deck }: Props) {
     !slide.body &&
     !slide.note
   const imageMaxH = imageOnly
-    ? 'min(72vh, 640px)'
+    ? 'min(58dvh, 640px)'
     : imageCount === 1
-      ? 'min(34vh, 280px)'
+      ? 'min(28dvh, 280px)'
       : imageCount === 2
-        ? 'min(30vh, 240px)'
-        : 'min(22vh, 160px)'
+        ? 'min(24dvh, 240px)'
+        : 'min(20dvh, 160px)'
 
   return (
     <section
@@ -107,12 +107,18 @@ export function ProjectIntro({ open, onClose, deck }: Props) {
       />
       <div className="grain absolute inset-0 opacity-[0.04]" aria-hidden />
 
-      <header className="relative z-10 shrink-0 px-6 pt-6 sm:px-10 sm:pt-8 lg:px-14">
-        <div className="flex items-center justify-between">
+      <header className="relative z-10 shrink-0 px-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-10 sm:pt-8 lg:px-14">
+        <div className="flex items-center justify-between gap-3">
           <button
             type="button"
-            className="ui-interactive transition-opacity hover:opacity-80"
-            style={ghost}
+            className="ui-interactive shrink-0 transition-opacity hover:opacity-80"
+            style={{
+              ...ghost,
+              fontSize: '0.8rem',
+              padding: '0.5rem 1rem',
+              paddingRight: 'calc(1rem + 0.2em)',
+              letterSpacing: '0.14em',
+            }}
             onClick={onClose}
           >
             返回
@@ -154,7 +160,7 @@ export function ProjectIntro({ open, onClose, deck }: Props) {
       <div
         ref={scrollRef}
         key={`${deck.brand}-${index}`}
-        className={`deck-scroll relative z-10 mx-auto min-h-0 w-full max-w-[1180px] flex-1 overflow-y-auto px-6 py-5 sm:px-10 lg:px-14${
+        className={`deck-scroll relative z-10 mx-auto min-h-0 w-full max-w-[1180px] flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-10 sm:py-5 lg:px-14${
           imageOnly ? ' flex items-center justify-center' : ''
         }`}
         style={{
@@ -295,15 +301,13 @@ export function ProjectIntro({ open, onClose, deck }: Props) {
 
         {slide.images && slide.images.length > 0 && (
           <div
-            className="mt-2 grid gap-3"
-            style={{
-              gridTemplateColumns:
-                imageCount === 1
-                  ? '1fr'
-                  : imageCount === 2
-                    ? '1fr 1fr'
-                    : 'repeat(4, minmax(0, 1fr))',
-            }}
+            className={`mt-2 grid gap-3 ${
+              imageCount === 1
+                ? 'grid-cols-1'
+                : imageCount === 2
+                  ? 'grid-cols-1 sm:grid-cols-2'
+                  : 'grid-cols-2 sm:grid-cols-4'
+            }`}
           >
             {slide.images.map((img) => (
               <figure key={img.src} className="m-0">
@@ -361,7 +365,7 @@ export function ProjectIntro({ open, onClose, deck }: Props) {
       </div>
 
       <footer
-        className="relative z-20 flex shrink-0 items-center justify-center gap-4 px-6 py-4 sm:px-10"
+        className="relative z-20 flex shrink-0 items-center justify-center gap-3 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:gap-4 sm:px-10 sm:py-4"
         style={{
           borderTop: `1px solid ${ui.goldLine}`,
           background:
@@ -373,6 +377,10 @@ export function ProjectIntro({ open, onClose, deck }: Props) {
           className="ui-interactive transition-opacity hover:opacity-80 disabled:opacity-30"
           style={{
             ...ghost,
+            fontSize: '0.8rem',
+            padding: '0.5rem 1.1rem',
+            paddingRight: 'calc(1.1rem + 0.2em)',
+            letterSpacing: '0.14em',
             background: 'rgba(10, 6, 4, 0.85)',
           }}
           disabled={index === 0}
@@ -385,6 +393,10 @@ export function ProjectIntro({ open, onClose, deck }: Props) {
           className="ui-interactive transition-opacity hover:opacity-80 disabled:opacity-30"
           style={{
             ...ghost,
+            fontSize: '0.8rem',
+            padding: '0.5rem 1.1rem',
+            paddingRight: 'calc(1.1rem + 0.2em)',
+            letterSpacing: '0.14em',
             background: 'rgba(10, 6, 4, 0.85)',
           }}
           disabled={index === slides.length - 1}

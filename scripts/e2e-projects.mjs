@@ -1,5 +1,5 @@
 /**
- * Smoke E2E: open archive and assert each project shows the expected action buttons.
+ * Smoke E2E: desktop + mobile archive action buttons stay reachable.
  * Run: node scripts/e2e-projects.mjs
  */
 import { chromium, devices } from 'playwright'
@@ -24,93 +24,127 @@ const expected = [
   },
 ]
 
-async function main() {
-  const browser = await chromium.launch({ headless: true })
-  const context = await browser.newContext({
-    ...devices['Desktop Chrome'],
-    reducedMotion: 'reduce',
+const profiles = [
+  {
+    name: 'desktop',
+    device: devices['Desktop Chrome'],
     viewport: { width: 1440, height: 900 },
+  },
+  {
+    name: 'mobile',
+    device: devices['iPhone 12'],
+    viewport: null,
+  },
+]
+
+async function assertArchive(page, viewportHeight, failures, profileName) {
+  const entry = page.getByTestId('projects-entry')
+  await entry.waitFor({ state: 'visible', timeout: 20000 })
+  await page.waitForTimeout(400)
+  await entry.click({ force: true })
+
+  const archive = page.getByTestId('project-archive')
+  await archive.waitFor({ state: 'visible' })
+  await page.waitForFunction(() => {
+    const el = document.querySelector('[data-testid="project-archive"]')
+    return el && Number(el.getAttribute('data-action-count') || 0) > 0
   })
-  const page = await context.newPage()
-  const failures = []
 
-  page.setDefaultTimeout(60000)
+  for (let i = 0; i < expected.length; i++) {
+    const want = expected[i]
+    if (i > 0) {
+      await page.getByTestId(`project-dot-${i}`).click()
+    }
+    await page.waitForFunction(
+      (id) =>
+        document
+          .querySelector('[data-testid="project-archive"]')
+          ?.getAttribute('data-project-id') === id,
+      want.id,
+    )
 
-  try {
-    await page.goto(BASE, { waitUntil: 'domcontentloaded' })
+    const title = (await page.getByTestId('project-title').innerText()).trim()
+    if (title !== want.title) {
+      failures.push(`[${profileName}/${want.id}] title="${title}" expected="${want.title}"`)
+    }
 
-    const entry = page.getByTestId('projects-entry')
-    await entry.waitFor({ state: 'visible', timeout: 20000 })
-    await page.waitForTimeout(500)
-    await entry.click({ force: true })
-
-    const archive = page.getByTestId('project-archive')
-    await archive.waitFor({ state: 'visible' })
-    await page.waitForFunction(() => {
-      const el = document.querySelector('[data-testid="project-archive"]')
-      return el && Number(el.getAttribute('data-action-count') || 0) > 0
-    })
-
-    for (let i = 0; i < expected.length; i++) {
-      const want = expected[i]
-      if (i > 0) {
-        await page.getByTestId(`project-dot-${i}`).click()
-      }
-      await page.waitForFunction(
-        (id) =>
-          document
-            .querySelector('[data-testid="project-archive"]')
-            ?.getAttribute('data-project-id') === id,
-        want.id,
+    const countAttr = await archive.getAttribute('data-action-count')
+    if (Number(countAttr) !== want.labels.length) {
+      failures.push(
+        `[${profileName}/${want.id}] data-action-count=${countAttr} expected=${want.labels.length}`,
       )
+    }
 
-      const title = (await page.getByTestId('project-title').innerText()).trim()
-      if (title !== want.title) {
-        failures.push(`[${want.id}] title="${title}" expected="${want.title}"`)
+    const buttons = page.getByTestId('project-action')
+    await buttons.first().waitFor({ state: 'attached' })
+    const n = await buttons.count()
+    if (n !== want.labels.length) {
+      failures.push(
+        `[${profileName}/${want.id}] visible actions=${n} expected=${want.labels.length}`,
+      )
+    }
+
+    const texts = []
+    for (let b = 0; b < n; b++) {
+      const btn = buttons.nth(b)
+      await btn.scrollIntoViewIfNeeded()
+      texts.push((await btn.innerText()).trim().replace(/\s+/g, ''))
+      const box = await btn.boundingBox()
+      if (!box || box.height < 8 || box.width < 8) {
+        failures.push(`[${profileName}/${want.id}] action #${b} not visible/clipped`)
+        continue
       }
-
-      const countAttr = await archive.getAttribute('data-action-count')
-      if (Number(countAttr) !== want.labels.length) {
+      // After scrollIntoView, button should intersect the viewport.
+      if (box.y + box.height < 0 || box.y > viewportHeight) {
         failures.push(
-          `[${want.id}] data-action-count=${countAttr} expected=${want.labels.length}`,
+          `[${profileName}/${want.id}] action #${b} outside viewport y=${box.y} h=${viewportHeight}`,
         )
       }
+    }
 
-      const buttons = page.getByTestId('project-action')
-      await buttons.first().waitFor({ state: 'visible' })
-      const n = await buttons.count()
-      if (n !== want.labels.length) {
-        failures.push(`[${want.id}] visible actions=${n} expected=${want.labels.length}`)
-      }
-
-      const texts = []
-      for (let b = 0; b < n; b++) {
-        const btn = buttons.nth(b)
-        texts.push((await btn.innerText()).trim().replace(/\s+/g, ''))
-        const box = await btn.boundingBox()
-        if (!box || box.height < 8 || box.width < 8) {
-          failures.push(`[${want.id}] action #${b} not visible/clipped`)
-          continue
-        }
-        if (box.y + box.height < 0 || box.y > 900) {
-          failures.push(`[${want.id}] action #${b} outside viewport y=${box.y}`)
-        }
-      }
-
-      for (const label of want.labels) {
-        const normalized = label.replace(/\s+/g, '')
-        if (!texts.includes(normalized)) {
-          failures.push(`[${want.id}] missing button "${label}" (got: ${texts.join(' | ')})`)
-        }
+    for (const label of want.labels) {
+      const normalized = label.replace(/\s+/g, '')
+      if (!texts.includes(normalized)) {
+        failures.push(
+          `[${profileName}/${want.id}] missing button "${label}" (got: ${texts.join(' | ')})`,
+        )
       }
     }
-  } catch (err) {
-    failures.push(String(err))
-    try {
-      await page.screenshot({ path: 'scripts/e2e-fail.png', fullPage: true })
-      console.error('Saved scripts/e2e-fail.png')
-    } catch {
-      /* ignore */
+  }
+}
+
+async function main() {
+  const browser = await chromium.launch({ headless: true })
+  const failures = []
+
+  try {
+    for (const profile of profiles) {
+      const context = await browser.newContext({
+        ...profile.device,
+        ...(profile.viewport ? { viewport: profile.viewport } : {}),
+        reducedMotion: 'reduce',
+      })
+      const page = await context.newPage()
+      page.setDefaultTimeout(60000)
+
+      try {
+        await page.goto(BASE, { waitUntil: 'domcontentloaded' })
+        const vp = page.viewportSize() || { width: 390, height: 844 }
+        await assertArchive(page, vp.height, failures, profile.name)
+      } catch (err) {
+        failures.push(`[${profile.name}] ${String(err)}`)
+        try {
+          await page.screenshot({
+            path: `scripts/e2e-fail-${profile.name}.png`,
+            fullPage: true,
+          })
+          console.error(`Saved scripts/e2e-fail-${profile.name}.png`)
+        } catch {
+          /* ignore */
+        }
+      } finally {
+        await context.close()
+      }
     }
   } finally {
     await browser.close()
@@ -122,7 +156,7 @@ async function main() {
     process.exit(1)
   }
 
-  console.log('E2E PASSED: all 3 projects expose the expected action buttons')
+  console.log('E2E PASSED: desktop + mobile expose expected action buttons')
 }
 
 main()

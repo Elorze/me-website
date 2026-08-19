@@ -81,7 +81,7 @@ export function HeroScene({ onOpenProjects, skipIntro = false }: Props) {
   }, [startSettled])
 
   return (
-    <section className="relative h-screen w-full overflow-hidden bg-ink">
+    <section className="relative h-dvh w-full overflow-hidden bg-ink">
       <div className="absolute inset-0">
         <DepthParallaxStage
           mouse={mouse}

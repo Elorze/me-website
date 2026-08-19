@@ -46,29 +46,35 @@ export function VideoPlayer({ open, src, title, onClose }: Props) {
       aria-modal
       aria-label={title ?? '视频播放'}
     >
-      <header className="flex shrink-0 items-center justify-between px-6 py-5 sm:px-10">
+      <header className="flex shrink-0 items-center justify-between gap-3 px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-10 sm:py-5">
         <p
-          className="m-0"
+          className="m-0 min-w-0 truncate"
           style={{
             fontFamily: displayFont,
-            fontSize: '0.9rem',
+            fontSize: 'clamp(0.78rem, 3vw, 0.9rem)',
             color: ui.goldSoft,
-            letterSpacing: '0.18em',
+            letterSpacing: '0.12em',
           }}
         >
           {title ?? '视觉视频'}
         </p>
         <button
           type="button"
-          className="ui-interactive transition-opacity hover:opacity-80"
-          style={closeBtn}
+          className="ui-interactive shrink-0 transition-opacity hover:opacity-80"
+          style={{
+            ...closeBtn,
+            fontSize: '0.8rem',
+            padding: '0.5rem 1rem',
+            paddingRight: 'calc(1rem + 0.2em)',
+            letterSpacing: '0.14em',
+          }}
           onClick={onClose}
         >
           关闭
         </button>
       </header>
 
-      <div className="flex min-h-0 flex-1 items-center justify-center px-4 pb-8 sm:px-10">
+      <div className="flex min-h-0 flex-1 items-center justify-center px-3 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-10 sm:pb-8">
         <video
           key={src}
           src={src}
