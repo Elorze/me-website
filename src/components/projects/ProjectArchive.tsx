@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { metaloftDeck } from '@/content/metaloftDeck'
-import { archiveMeta, projects } from '@/content/projects'
+import { archiveMeta, projects, type ProjectAction } from '@/content/projects'
 import { displayFont, ui } from '@/content/theme'
 import { zhongzhongDeck } from '@/content/zhongzhongDeck'
 import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
 import { ProjectIntro } from './ProjectIntro'
+import { VideoPlayer } from './VideoPlayer'
 
 type Props = {
   visible: boolean
@@ -13,16 +14,24 @@ type Props = {
 
 const ghostBtn: CSSProperties = {
   fontFamily: displayFont,
-  fontSize: '0.92rem',
+  fontSize: 'clamp(0.78rem, 1.1vw, 0.9rem)',
   color: ui.goldSoft,
-  letterSpacing: '0.22em',
-  padding: '0.62rem 1.5rem',
-  paddingRight: 'calc(1.5rem + 0.22em)',
+  letterSpacing: '0.12em',
+  padding: '0.7rem 1.15rem',
   background: 'transparent',
   border: `1px solid ${ui.ivoryBorder}`,
   borderRadius: 1,
   textDecoration: 'none',
-  display: 'inline-block',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  textAlign: 'center',
+  lineHeight: 1.5,
+  width: '100%',
+  boxSizing: 'border-box',
+  whiteSpace: 'normal',
+  wordBreak: 'keep-all',
+  cursor: 'pointer',
 }
 
 /**
@@ -33,6 +42,7 @@ export function ProjectArchive({ visible, onHome }: Props) {
   const reduced = usePrefersReducedMotion()
   const [index, setIndex] = useState(0)
   const [introOpen, setIntroOpen] = useState(false)
+  const [video, setVideo] = useState<{ src: string; title: string } | null>(null)
   const lockRef = useRef(false)
   const unlockTimer = useRef<number | undefined>(undefined)
   const project = projects[index] ?? projects[0]
@@ -43,6 +53,10 @@ export function ProjectArchive({ visible, onHome }: Props) {
         ? zhongzhongDeck
         : null
   const nodeTop = `${10 + (index / Math.max(projects.length - 1, 1)) * 72}%`
+  const overlayOpen = introOpen || Boolean(video)
+  const actions = (project.actions ?? []).filter(
+    (action) => action.type !== 'intro' || Boolean(introDeck),
+  )
 
   const goTo = useCallback(
     (next: number) => {
@@ -66,7 +80,7 @@ export function ProjectArchive({ visible, onHome }: Props) {
   }, [])
 
   useEffect(() => {
-    if (!visible || introOpen) return
+    if (!visible || overlayOpen) return
 
     const onWheel = (e: WheelEvent) => {
       if (Math.abs(e.deltaY) < 18) return
@@ -92,7 +106,55 @@ export function ProjectArchive({ visible, onHome }: Props) {
       window.removeEventListener('wheel', onWheel)
       window.removeEventListener('keydown', onKey)
     }
-  }, [visible, introOpen, index, goTo, onHome])
+  }, [visible, overlayOpen, index, goTo, onHome])
+
+  const renderAction = (action: ProjectAction, i: number) => {
+    if (action.type === 'link') {
+      return (
+        <a
+          key={`action-${i}-${action.label}`}
+          data-testid="project-action"
+          data-action-type="link"
+          className="ui-interactive transition-opacity hover:opacity-80"
+          href={action.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={ghostBtn}
+        >
+          {action.label}
+        </a>
+      )
+    }
+    if (action.type === 'intro') {
+      const label = action.label ?? archiveMeta.introCta
+      return (
+        <button
+          key={`action-${i}-${label}`}
+          type="button"
+          data-testid="project-action"
+          data-action-type="intro"
+          className="ui-interactive transition-opacity hover:opacity-80"
+          style={ghostBtn}
+          onClick={() => setIntroOpen(true)}
+        >
+          {label}
+        </button>
+      )
+    }
+    return (
+      <button
+        key={`action-${i}-${action.label}`}
+        type="button"
+        data-testid="project-action"
+        data-action-type="video"
+        className="ui-interactive transition-opacity hover:opacity-80"
+        style={ghostBtn}
+        onClick={() => setVideo({ src: action.src, title: action.label })}
+      >
+        {action.label}
+      </button>
+    )
+  }
 
   return (
     <section
@@ -103,6 +165,10 @@ export function ProjectArchive({ visible, onHome }: Props) {
         transition: 'opacity 0.35s ease',
       }}
       aria-hidden={!visible}
+      data-testid="project-archive"
+      data-project-id={project.id}
+      data-project-index={index}
+      data-action-count={actions.length}
     >
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-24"
@@ -114,7 +180,7 @@ export function ProjectArchive({ visible, onHome }: Props) {
       />
       <div className="grain absolute inset-0 opacity-[0.045]" aria-hidden />
 
-      <header className="relative z-10 flex items-center justify-between px-6 pt-8 sm:px-10 sm:pt-10 lg:px-14">
+      <header className="relative z-10 flex shrink-0 items-center justify-between px-6 pt-8 sm:px-10 sm:pt-10 lg:px-14">
         <h1
           className="m-0 leading-none"
           style={{
@@ -142,6 +208,7 @@ export function ProjectArchive({ visible, onHome }: Props) {
           type="button"
           className="ui-interactive grid grid-cols-3 gap-[5px] p-2 transition-opacity hover:opacity-70"
           aria-label="返回首页"
+          data-testid="archive-home"
           onClick={onHome}
           style={{ color: ui.goldSoft }}
         >
@@ -156,16 +223,16 @@ export function ProjectArchive({ visible, onHome }: Props) {
       </header>
 
       <div
-        className="relative mx-6 mt-5 h-px sm:mx-10 lg:mx-14"
+        className="relative mx-6 mt-5 h-px shrink-0 sm:mx-10 lg:mx-14"
         style={{
           background: `linear-gradient(90deg, ${ui.goldLine}, rgba(197,147,69,0.12) 55%, transparent)`,
         }}
         aria-hidden
       />
 
-      <div className="relative z-10 flex h-[calc(100%-6.25rem)] items-center px-6 pb-8 sm:px-10 lg:px-14 lg:pb-12">
-        <div className="mx-auto grid w-full max-w-[1180px] grid-cols-1 items-center gap-9 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.85fr)] lg:gap-14 xl:gap-16">
-          <div className="relative flex min-h-[40vh] items-stretch gap-5 sm:gap-6 lg:min-h-[62vh]">
+      <div className="relative z-10 flex min-h-0 flex-1 h-[calc(100%-6.25rem)] items-stretch px-6 pb-8 pt-4 sm:px-10 lg:px-14 lg:pb-10">
+        <div className="mx-auto grid w-full max-w-[1180px] grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.95fr)] lg:items-center lg:gap-12 xl:gap-16">
+          <div className="relative flex min-h-[32vh] items-stretch gap-5 sm:gap-6 lg:min-h-[58vh]">
             <div className="relative w-px shrink-0 self-stretch" aria-hidden>
               <div
                 className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2"
@@ -183,7 +250,7 @@ export function ProjectArchive({ visible, onHome }: Props) {
             </div>
 
             <div
-              className="relative min-h-[36vh] flex-1 overflow-hidden lg:min-h-0"
+              className="relative min-h-[30vh] flex-1 overflow-hidden lg:min-h-0"
               style={{
                 background: ui.inkRaised,
                 boxShadow: 'inset 0 0 0 1px rgba(245, 236, 220, 0.07)',
@@ -214,7 +281,7 @@ export function ProjectArchive({ visible, onHome }: Props) {
 
           <div
             key={`copy-${project.id}`}
-            className="max-w-md lg:pl-2"
+            className="deck-scroll flex max-h-full min-h-0 flex-col justify-center overflow-y-auto py-1 lg:pl-2"
             style={{
               animation: reduced
                 ? undefined
@@ -222,12 +289,14 @@ export function ProjectArchive({ visible, onHome }: Props) {
             }}
           >
             <p
-              className="m-0 mb-4"
+              className="m-0 mb-3"
+              data-testid="project-year"
               style={{
                 fontFamily: displayFont,
-                fontSize: '0.82rem',
+                fontSize: '0.78rem',
                 color: ui.goldSoft,
-                letterSpacing: '0.22em',
+                letterSpacing: '0.1em',
+                lineHeight: 1.7,
               }}
             >
               {project.year}
@@ -240,10 +309,11 @@ export function ProjectArchive({ visible, onHome }: Props) {
             </p>
 
             <h2
-              className="m-0 mb-5"
+              className="m-0 mb-4"
+              data-testid="project-title"
               style={{
                 fontFamily: displayFont,
-                fontSize: 'clamp(1.65rem, 3.2vw, 2.45rem)',
+                fontSize: 'clamp(1.45rem, 2.8vw, 2.2rem)',
                 fontWeight: 400,
                 color: ui.ivory,
                 letterSpacing: '0.06em',
@@ -254,40 +324,24 @@ export function ProjectArchive({ visible, onHome }: Props) {
             </h2>
 
             <p
-              className="m-0 mb-9 max-w-[22rem]"
+              className="m-0 mb-6 max-w-[26rem]"
+              data-testid="project-summary"
               style={{
                 fontFamily: displayFont,
-                fontSize: 'clamp(0.88rem, 1.2vw, 0.98rem)',
+                fontSize: 'clamp(0.86rem, 1.15vw, 0.96rem)',
                 color: ui.ivoryMuted,
-                letterSpacing: '0.045em',
-                lineHeight: 1.9,
+                letterSpacing: '0.04em',
+                lineHeight: 1.85,
               }}
             >
               {project.summary}
             </p>
 
-            <div className="flex flex-wrap gap-3">
-              {project.website && (
-                <a
-                  className="ui-interactive transition-opacity hover:opacity-80"
-                  href={project.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={ghostBtn}
-                >
-                  {project.websiteLabel ?? archiveMeta.cta}
-                </a>
-              )}
-              {introDeck && (
-                <button
-                  type="button"
-                  className="ui-interactive transition-opacity hover:opacity-80"
-                  style={ghostBtn}
-                  onClick={() => setIntroOpen(true)}
-                >
-                  {archiveMeta.introCta}
-                </button>
-              )}
+            <div
+              className="flex w-full max-w-[26rem] flex-col gap-2.5"
+              data-testid="project-actions"
+            >
+              {actions.map((action, i) => renderAction(action, i))}
             </div>
           </div>
         </div>
@@ -295,6 +349,7 @@ export function ProjectArchive({ visible, onHome }: Props) {
         <nav
           className="absolute right-3 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-3.5 sm:right-6 lg:right-9"
           aria-label="项目列表"
+          data-testid="project-dots"
         >
           {projects.map((item, i) => {
             const active = i === index
@@ -305,6 +360,7 @@ export function ProjectArchive({ visible, onHome }: Props) {
                 className="ui-interactive transition-all duration-500"
                 aria-label={item.title}
                 aria-current={active ? 'true' : undefined}
+                data-testid={`project-dot-${i}`}
                 onClick={() => goTo(i)}
                 style={{
                   width: active ? 3 : 5,
@@ -327,6 +383,13 @@ export function ProjectArchive({ visible, onHome }: Props) {
           deck={introDeck}
         />
       )}
+
+      <VideoPlayer
+        open={Boolean(video)}
+        src={video?.src ?? null}
+        title={video?.title}
+        onClose={() => setVideo(null)}
+      />
     </section>
   )
 }

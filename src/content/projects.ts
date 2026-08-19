@@ -1,5 +1,10 @@
 import { images } from './assets'
 
+export type ProjectAction =
+  | { type: 'link'; label: string; href: string }
+  | { type: 'intro'; label?: string }
+  | { type: 'video'; label: string; src: string }
+
 export type Project = {
   id: string
   year: string
@@ -7,9 +12,8 @@ export type Project = {
   title: string
   summary: string
   cover: string
-  website?: string
-  websiteLabel?: string
   intro?: 'metaloft' | 'zhongzhong'
+  actions?: ProjectAction[]
 }
 
 /**
@@ -17,55 +21,60 @@ export type Project = {
  */
 export const projects: Project[] = [
   {
-    id: 'lijiang-light',
+    id: 'metaloft',
     year: '[with Ding] 文旅，数字相册空间，创作者',
     place: '',
     title: 'METALOFT',
     summary:
       '将照片、语音与日常瞬间转化为可展示、可收藏、可进化、可打印的数字纪念碑。让记忆也拥有价值，让创作更加便捷，让链上更加有趣。',
     cover: images.metaloftCover,
-    website: 'https://www.metaloftlab.com/',
-    websiteLabel: '网页',
     intro: 'metaloft',
+    actions: [
+      { type: 'link', label: '网页', href: 'https://www.metaloftlab.com/' },
+      { type: 'intro' },
+      { type: 'video', label: '视觉视频', src: '/videos/metaloft-visual.mp4' },
+    ],
   },
   {
-    id: 'dawn-gate',
+    id: 'zhongzhong',
     year: '[with 万文熙] 本土植物，视觉，ip',
     place: '',
     title: '种种大世界',
     summary:
       '一个以本土植物为元素的视觉世界，探索植物的多样性和生命力。',
     cover: images.zhongzhongCover,
-    website: 'https://www.zhongzhongworld.net/',
-    websiteLabel: '官网',
     intro: 'zhongzhong',
+    actions: [
+      { type: 'link', label: '官网', href: 'https://www.zhongzhongworld.net/' },
+      { type: 'intro' },
+      {
+        type: 'link',
+        label: '种种酒馆（时间管理番茄钟）',
+        href: 'https://lifekitchen.zhongzhongworld.net',
+      },
+    ],
   },
   {
-    id: 'mist-scroll',
-    year: '2024',
-    place: '阳朔',
-    title: '云岚卷 · 交互长卷',
+    id: 'nantang-bai',
+    year: '[with 蓝莓，cc] 乡村自组织，web3，梦开始的地方',
+    place: '',
+    title: '南塘 · BAI 社区任务系统',
     summary:
-      '用流动的雾气作为章节过渡，让浏览节奏贴近山水画中的留白与呼吸。',
+      '去中心化自组织治理，web3数字身份，让每一份社区贡献记录在区块链上',
     cover: images.guilinWide,
-  },
-  {
-    id: 'stone-echo',
-    year: '2025',
-    place: '漓江',
-    title: '石韵 · 声景共鸣',
-    summary:
-      '结合空间音景与深度视差，让峰林轮廓在光色变化中产生可感知的回响。',
-    cover: images.guilinTall,
-  },
-  {
-    id: 'archive-nest',
-    year: '2025',
-    place: '云展',
-    title: '展巢 · 作品归档',
-    summary:
-      '为后续作品预留的归档位，延续同一套光色与字体语言，保持观展连贯性。',
-    cover: images.guilinWide,
+    actions: [
+      {
+        type: 'video',
+        label: 'semi数字身份和bai平台介绍视频',
+        src: '/videos/nantang-semi-bai.mp4',
+      },
+      {
+        type: 'link',
+        label: 'semi数字身份github介绍',
+        href: 'https://github.com/nantang-dao',
+      },
+      { type: 'link', label: 'semi', href: 'https://semi.ntdao.xyz' },
+    ],
   },
 ] satisfies Project[]
 

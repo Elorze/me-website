@@ -30,6 +30,7 @@ export function ProjectsEntry({ visible, onOpenProjects }: Props) {
         <button
           type="button"
           className="projects-entry ui-interactive px-5 py-2.5 leading-none transition-opacity duration-300 hover:opacity-80 sm:px-6 sm:py-3"
+          data-testid="projects-entry"
           style={{
             fontFamily: displayFont,
             fontSize: 'clamp(0.95rem, 1.6vw, 1.15rem)',
