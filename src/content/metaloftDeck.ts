@@ -1,4 +1,3 @@
-import logo from '@/assets/images/metaloft/image2.jpeg'
 import monumentA from '@/assets/images/metaloft/image3.png'
 import monumentB from '@/assets/images/metaloft/image5.png'
 import demoStill from '@/assets/images/metaloft/image6.png'
@@ -8,23 +7,13 @@ import patina0 from '@/assets/images/metaloft/image12.png'
 import patina1 from '@/assets/images/metaloft/image13.png'
 import patina2 from '@/assets/images/metaloft/image14.png'
 import patina3 from '@/assets/images/metaloft/image15.png'
+import type { ProjectDeck } from './deckTypes'
 
-export type DeckSlide = {
-  kicker: string
-  title: string
-  lead?: string
-  body?: string[]
-  columns?: { heading: string; items: string[] }[]
-  bullets?: string[]
-  note?: string
-  images?: { src: string; caption?: string }[]
-  closing?: boolean
-}
+export type { DeckSlide } from './deckTypes'
 
 export const metaloftDeck = {
   brand: 'METALOFT',
   brandZh: '梅塔洛芙特',
-  logo,
   slides: [
     {
       kicker: 'MEMORY / ART / ONCHAIN',
@@ -213,5 +202,5 @@ export const metaloftDeck = {
       ],
       closing: true,
     },
-  ] satisfies DeckSlide[],
-}
+  ],
+} satisfies ProjectDeck

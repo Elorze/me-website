@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
-import { metaloftDeck } from '@/content/metaloftDeck'
+import type { ProjectDeck } from '@/content/deckTypes'
 import { displayFont, ui } from '@/content/theme'
 import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
 
 type Props = {
   open: boolean
   onClose: () => void
+  deck: ProjectDeck
 }
 
 const ghost: CSSProperties = {
@@ -24,9 +25,9 @@ const ghost: CSSProperties = {
  * Brand deck as a page — no download, browse like slides.
  * Header / body / footer are stacked so titles stay visible and nav is never covered.
  */
-export function ProjectIntro({ open, onClose }: Props) {
+export function ProjectIntro({ open, onClose, deck }: Props) {
   const reduced = usePrefersReducedMotion()
-  const slides = metaloftDeck.slides
+  const slides = deck.slides
   const [index, setIndex] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
   const slide = slides[index]
@@ -40,7 +41,7 @@ export function ProjectIntro({ open, onClose }: Props) {
 
   useEffect(() => {
     if (open) setIndex(0)
-  }, [open])
+  }, [open, deck])
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0 })
@@ -73,14 +74,28 @@ export function ProjectIntro({ open, onClose }: Props) {
   const n = String(index + 1).padStart(2, '0')
   const total = String(slides.length).padStart(2, '0')
   const imageCount = slide.images?.length ?? 0
-  const imageMaxH =
-    imageCount === 1 ? 'min(34vh, 280px)' : imageCount === 2 ? 'min(30vh, 240px)' : 'min(22vh, 160px)'
+  const imageOnly =
+    Boolean(slide.images?.length) &&
+    !slide.kicker &&
+    !slide.title &&
+    !slide.lead &&
+    !slide.columns &&
+    !slide.bullets &&
+    !slide.body &&
+    !slide.note
+  const imageMaxH = imageOnly
+    ? 'min(72vh, 640px)'
+    : imageCount === 1
+      ? 'min(34vh, 280px)'
+      : imageCount === 2
+        ? 'min(30vh, 240px)'
+        : 'min(22vh, 160px)'
 
   return (
     <section
       className="absolute inset-0 z-40 flex flex-col overflow-hidden"
       style={{ background: ui.ink }}
-      aria-label="METALOFT 项目介绍"
+      aria-label={`${deck.brand} 项目介绍`}
     >
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-24"
@@ -111,7 +126,7 @@ export function ProjectIntro({ open, onClose }: Props) {
               letterSpacing: '0.18em',
             }}
           >
-            {metaloftDeck.brand}
+            {deck.brand}
             <span style={{ margin: '0 0.5em', opacity: 0.45 }}>/</span>
             项目介绍
           </p>
@@ -138,40 +153,46 @@ export function ProjectIntro({ open, onClose }: Props) {
 
       <div
         ref={scrollRef}
-        key={index}
-        className="deck-scroll relative z-10 mx-auto min-h-0 w-full max-w-[1180px] flex-1 overflow-y-auto px-6 py-5 sm:px-10 lg:px-14"
+        key={`${deck.brand}-${index}`}
+        className={`deck-scroll relative z-10 mx-auto min-h-0 w-full max-w-[1180px] flex-1 overflow-y-auto px-6 py-5 sm:px-10 lg:px-14${
+          imageOnly ? ' flex items-center justify-center' : ''
+        }`}
         style={{
           animation: reduced
             ? undefined
             : 'archive-copy-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both',
         }}
       >
-        <p
-          className="m-0 mb-3"
-          style={{
-            fontFamily: displayFont,
-            fontSize: '0.78rem',
-            color: ui.goldSoft,
-            letterSpacing: '0.22em',
-          }}
-        >
-          {slide.kicker}
-        </p>
-        <h2
-          className="m-0 mb-4 max-w-3xl"
-          style={{
-            fontFamily: displayFont,
-            fontSize: slide.closing
-              ? 'clamp(1.55rem, 3.2vw, 2.4rem)'
-              : 'clamp(1.35rem, 2.6vw, 2rem)',
-            fontWeight: 400,
-            color: ui.ivory,
-            letterSpacing: '0.06em',
-            lineHeight: 1.4,
-          }}
-        >
-          {slide.title}
-        </h2>
+        {slide.kicker && (
+          <p
+            className="m-0 mb-3"
+            style={{
+              fontFamily: displayFont,
+              fontSize: '0.78rem',
+              color: ui.goldSoft,
+              letterSpacing: '0.22em',
+            }}
+          >
+            {slide.kicker}
+          </p>
+        )}
+        {slide.title && (
+          <h2
+            className="m-0 mb-4 max-w-3xl"
+            style={{
+              fontFamily: displayFont,
+              fontSize: slide.closing
+                ? 'clamp(1.55rem, 3.2vw, 2.4rem)'
+                : 'clamp(1.35rem, 2.6vw, 2rem)',
+              fontWeight: 400,
+              color: ui.ivory,
+              letterSpacing: '0.06em',
+              lineHeight: 1.4,
+            }}
+          >
+            {slide.title}
+          </h2>
+        )}
         {slide.lead && (
           <p
             className="m-0 mb-5 max-w-2xl"
@@ -297,10 +318,11 @@ export function ProjectIntro({ open, onClose }: Props) {
                   <img
                     src={img.src}
                     alt={img.caption ?? ''}
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-contain"
                     style={{
                       maxHeight: imageMaxH,
-                      filter: 'saturate(0.92) contrast(1.04)',
+                      width: '100%',
+                      background: '#0c0a08',
                     }}
                   />
                 </div>
@@ -339,10 +361,11 @@ export function ProjectIntro({ open, onClose }: Props) {
       </div>
 
       <footer
-        className="relative z-20 shrink-0 flex items-center justify-center gap-4 px-6 py-4 sm:px-10"
+        className="relative z-20 flex shrink-0 items-center justify-center gap-4 px-6 py-4 sm:px-10"
         style={{
           borderTop: `1px solid ${ui.goldLine}`,
-          background: 'linear-gradient(180deg, rgba(10,6,4,0.55) 0%, rgba(10,6,4,0.96) 40%)',
+          background:
+            'linear-gradient(180deg, rgba(10,6,4,0.55) 0%, rgba(10,6,4,0.96) 40%)',
         }}
       >
         <button

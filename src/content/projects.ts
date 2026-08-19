@@ -9,7 +9,7 @@ export type Project = {
   cover: string
   website?: string
   websiteLabel?: string
-  intro?: 'metaloft'
+  intro?: 'metaloft' | 'zhongzhong'
 }
 
 /**
@@ -18,7 +18,7 @@ export type Project = {
 export const projects: Project[] = [
   {
     id: 'lijiang-light',
-    year: '文旅，数字相册空间，创作者',
+    year: '[with Ding] 文旅，数字相册空间，创作者',
     place: '',
     title: 'METALOFT',
     summary:
@@ -30,12 +30,15 @@ export const projects: Project[] = [
   },
   {
     id: 'dawn-gate',
-    year: '2024',
-    place: '桂林',
-    title: '晨门 · 光影序章',
+    year: '[with 万文熙] 本土植物，视觉，ip',
+    place: '',
+    title: '种种大世界',
     summary:
-      '以门洞与光环作为叙事入口，将山水摄影转译为可漫游的沉浸式空间体验。',
-    cover: images.guilinTall,
+      '一个以本土植物为元素的视觉世界，探索植物的多样性和生命力。',
+    cover: images.zhongzhongCover,
+    website: 'https://www.zhongzhongworld.net/',
+    websiteLabel: '官网',
+    intro: 'zhongzhong',
   },
   {
     id: 'mist-scroll',

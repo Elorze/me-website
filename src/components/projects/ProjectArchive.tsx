@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
+import { metaloftDeck } from '@/content/metaloftDeck'
 import { archiveMeta, projects } from '@/content/projects'
 import { displayFont, ui } from '@/content/theme'
+import { zhongzhongDeck } from '@/content/zhongzhongDeck'
 import { usePrefersReducedMotion } from '@/lib/hooks/usePrefersReducedMotion'
 import { ProjectIntro } from './ProjectIntro'
 
@@ -34,6 +36,12 @@ export function ProjectArchive({ visible, onHome }: Props) {
   const lockRef = useRef(false)
   const unlockTimer = useRef<number | undefined>(undefined)
   const project = projects[index] ?? projects[0]
+  const introDeck =
+    project.intro === 'metaloft'
+      ? metaloftDeck
+      : project.intro === 'zhongzhong'
+        ? zhongzhongDeck
+        : null
   const nodeTop = `${10 + (index / Math.max(projects.length - 1, 1)) * 72}%`
 
   const goTo = useCallback(
@@ -270,7 +278,7 @@ export function ProjectArchive({ visible, onHome }: Props) {
                   {project.websiteLabel ?? archiveMeta.cta}
                 </a>
               )}
-              {project.intro === 'metaloft' && (
+              {introDeck && (
                 <button
                   type="button"
                   className="ui-interactive transition-opacity hover:opacity-80"
@@ -312,7 +320,13 @@ export function ProjectArchive({ visible, onHome }: Props) {
         </nav>
       </div>
 
-      <ProjectIntro open={introOpen} onClose={() => setIntroOpen(false)} />
+      {introDeck && (
+        <ProjectIntro
+          open={introOpen}
+          onClose={() => setIntroOpen(false)}
+          deck={introDeck}
+        />
+      )}
     </section>
   )
 }
