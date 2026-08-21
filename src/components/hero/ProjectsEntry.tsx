@@ -1,26 +1,15 @@
 import { site } from '@/content/site'
+import { displayFont, ui } from '@/content/theme'
 
 type Props = {
   visible: boolean
+  onOpenProjects?: () => void
 }
-
-/**
- * Reference (AURUM layout):
- * - bottom-left brand: large display, warm gold (keep site gold)
- * - top-right entry: thin frame, egg-white / ivory with a hint of gold
- * Font feel: refined serif / 宋体 display (like AURUM), not brush script
- */
-const displayFont =
-  '"Songti SC", "STSong", "Noto Serif SC", "Source Han Serif SC", "SimSun", serif'
-
-const brandGold = 'rgba(255, 236, 200, 0.94)'
-const ivory = 'rgba(252, 248, 240, 0.92)'
-const ivoryBorder = 'rgba(245, 236, 220, 0.42)'
 
 /**
  * After settle: 「云展」 bottom-left · 「项目经历」 top-right
  */
-export function ProjectsEntry({ visible }: Props) {
+export function ProjectsEntry({ visible, onOpenProjects }: Props) {
   return (
     <div
       className="pointer-events-none absolute inset-0 z-30"
@@ -30,9 +19,8 @@ export function ProjectsEntry({ visible }: Props) {
       }}
       aria-hidden={!visible}
     >
-      {/* Top-right — like「探索 · 山脉」: thin ivory frame */}
       <div
-        className="absolute right-0 top-0 p-5 sm:p-8 lg:p-10"
+        className="absolute right-0 top-0 z-10 p-4 pr-[max(1rem,env(safe-area-inset-right))] pt-[max(1.25rem,env(safe-area-inset-top))] sm:p-8 lg:p-10"
         style={{
           transform: visible ? 'translate3d(0, 0, 0)' : 'translate3d(0, -8px, 0)',
           transition: 'transform 1.2s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -41,27 +29,29 @@ export function ProjectsEntry({ visible }: Props) {
       >
         <button
           type="button"
-          className="projects-entry px-5 py-2.5 leading-none transition-opacity duration-300 hover:opacity-80 sm:px-6 sm:py-3"
+          className="projects-entry ui-interactive relative z-10 min-h-11 touch-manipulation px-4 py-3 leading-none transition-opacity duration-300 hover:opacity-80 active:opacity-70 sm:min-h-0 sm:px-6 sm:py-3"
+          data-testid="projects-entry"
           style={{
             fontFamily: displayFont,
-            fontSize: 'clamp(0.95rem, 1.6vw, 1.15rem)',
+            fontSize: 'clamp(0.88rem, 3.4vw, 1.15rem)',
             fontWeight: 400,
-            color: ivory,
-            letterSpacing: '0.28em',
-            paddingRight: 'calc(1.5rem + 0.28em)',
+            color: ui.ivory,
+            letterSpacing: '0.2em',
+            paddingRight: 'calc(1rem + 0.2em)',
             background: 'rgba(255, 252, 245, 0.04)',
-            border: `1px solid ${ivoryBorder}`,
+            border: `1px solid ${ui.ivoryBorder}`,
             borderRadius: 2,
+            WebkitTapHighlightColor: 'transparent',
           }}
           aria-label={site.projectsLabel}
+          onClick={onOpenProjects}
         >
           {site.projectsLabel}
         </button>
       </div>
 
-      {/* Bottom-left — like「AURUM」: large warm-gold brand */}
       <div
-        className="absolute bottom-0 left-0 p-5 sm:p-8 lg:p-10"
+        className="absolute bottom-0 left-0 p-4 pb-[max(1.1rem,env(safe-area-inset-bottom))] sm:p-8 lg:p-10"
         style={{
           transform: visible ? 'translate3d(0, 0, 0)' : 'translate3d(0, 10px, 0)',
           transition: 'transform 1.2s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -71,11 +61,11 @@ export function ProjectsEntry({ visible }: Props) {
           className="m-0 select-none leading-none"
           style={{
             fontFamily: displayFont,
-            fontSize: 'clamp(2.6rem, 6.5vw, 4.5rem)',
+            fontSize: 'clamp(2.15rem, 11vw, 4.5rem)',
             fontWeight: 400,
-            color: brandGold,
-            letterSpacing: '0.22em',
-            marginRight: '-0.22em',
+            color: ui.brandGold,
+            letterSpacing: '0.16em',
+            marginRight: '-0.16em',
             textShadow: '0 2px 28px rgba(20, 8, 0, 0.35)',
           }}
           aria-label={site.name}

@@ -109,7 +109,10 @@ void main() {
 }
 `
 
-/** Kept for a later fog pass — not used in the current hero timeline. */
+/**
+ * Mist veil — u_clear 0 = dense, 1 = gone.
+ * u_veil 1 = full-screen cover (page transition); 0 = soft radial parting.
+ */
 export const fogFrag = `#version 300 es
 precision highp float;
 
@@ -118,6 +121,7 @@ uniform vec2 u_mouse;
 uniform vec2 u_res;
 uniform float u_time;
 uniform float u_clear;
+uniform float u_veil;
 
 in vec2 v_uv;
 out vec4 outColor;
@@ -129,12 +133,15 @@ float hash(vec2 p) {
 void main() {
   vec2 uv = v_uv;
   float aspect = u_res.x / max(u_res.y, 1.0);
+  float veil = clamp(u_veil, 0.0, 1.0);
+  float clear = clamp(u_clear, 0.0, 1.0);
 
-  vec2 flowA = vec2(u_time * 0.018, -u_time * 0.012);
-  vec2 flowB = vec2(-u_time * 0.014, u_time * 0.01);
+  vec2 flowA = vec2(u_time * 0.022, -u_time * 0.014);
+  vec2 flowB = vec2(-u_time * 0.016, u_time * 0.012);
   float s1 = texture(u_smoke, fract(uv * vec2(1.15, 1.0) + flowA)).r;
   float s2 = texture(u_smoke, fract(uv * vec2(1.6, 1.25) * 0.85 + flowB + 0.37)).r;
-  float smoke = pow(clamp(s1 * 0.65 + s2 * 0.55, 0.0, 1.0), 0.92);
+  float s3 = texture(u_smoke, fract(uv * vec2(0.9, 1.4) + flowA * 1.4 + 0.61)).r;
+  float smoke = pow(clamp(s1 * 0.55 + s2 * 0.45 + s3 * 0.35, 0.0, 1.0), 0.88);
 
   float n = hash(uv * u_res * 0.35 + u_time * 0.2);
   smoke = mix(smoke, max(smoke, 0.55 + n * 0.15), 0.35);
@@ -142,23 +149,28 @@ void main() {
   vec2 center = vec2(0.5, 0.42);
   vec2 d = (uv - center) * vec2(aspect, 1.0);
   float radial = length(d);
-  float part = smoothstep(0.15 + u_clear * 1.35, 0.0 + u_clear * 0.2, radial);
+  float part = smoothstep(0.15 + clear * 1.35, 0.0 + clear * 0.2, radial);
+  part *= (1.0 - veil);
 
   vec2 m = (u_mouse * 0.5 + 0.5);
   float pointerClear = smoothstep(0.28, 0.0, length((uv - m) * vec2(aspect, 1.0)));
+  pointerClear *= (1.0 - veil * 0.85);
 
   float density = smoke;
+  density = mix(density, max(density, 0.82 + n * 0.08), veil);
   density *= mix(1.0, 0.15, part);
-  density *= mix(1.0, 0.55, pointerClear * (0.35 + u_clear * 0.65));
-  density *= (1.0 - u_clear * 0.92);
+  density *= mix(1.0, 0.55, pointerClear * (0.35 + clear * 0.65));
+  density *= (1.0 - clear * mix(0.92, 0.98, veil));
   density = clamp(density, 0.0, 1.0);
 
   vec3 fogColor = mix(vec3(0.95, 0.78, 0.55), vec3(1.0, 0.92, 0.82), smoke);
-  float alpha = density * mix(0.98, 0.12, u_clear);
+  fogColor = mix(fogColor, vec3(0.22, 0.14, 0.08), veil * 0.22 * (1.0 - clear));
+  float alpha = density * mix(0.98, 0.08, clear);
+  alpha = mix(alpha, max(alpha, 0.94 * (1.0 - clear)), veil);
 
   float edge = smoothstep(0.55, 1.0, max(abs(uv.x - 0.5) * 1.6, abs(uv.y - 0.5) * 1.2));
-  alpha = max(alpha, edge * (1.0 - u_clear) * 0.35);
+  alpha = max(alpha, edge * (1.0 - clear) * mix(0.35, 0.55, veil));
 
-  outColor = vec4(fogColor, alpha);
+  outColor = vec4(fogColor, clamp(alpha, 0.0, 1.0));
 }
 `

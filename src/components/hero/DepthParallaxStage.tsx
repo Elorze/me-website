@@ -167,7 +167,7 @@ export function DepthParallaxStage({ mouse, intro, sunrise, reduced }: Props) {
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 h-full w-full"
+      className="pointer-events-none absolute inset-0 h-full w-full"
       aria-hidden
     />
   )
