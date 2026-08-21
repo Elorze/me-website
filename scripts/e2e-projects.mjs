@@ -41,7 +41,8 @@ async function assertArchive(page, viewportHeight, failures, profileName) {
   const entry = page.getByTestId('projects-entry')
   await entry.waitFor({ state: 'visible', timeout: 20000 })
   await page.waitForTimeout(400)
-  await entry.click({ force: true })
+  // Must be a real tap — force:true would hide mobile hit-target regressions.
+  await entry.click({ timeout: 5000 })
 
   const archive = page.getByTestId('project-archive')
   await archive.waitFor({ state: 'visible' })

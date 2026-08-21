@@ -20,7 +20,7 @@ export function ProjectsEntry({ visible, onOpenProjects }: Props) {
       aria-hidden={!visible}
     >
       <div
-        className="absolute right-0 top-0 p-4 pt-[max(1rem,env(safe-area-inset-top))] sm:p-8 lg:p-10"
+        className="absolute right-0 top-0 z-10 p-4 pr-[max(1rem,env(safe-area-inset-right))] pt-[max(1.25rem,env(safe-area-inset-top))] sm:p-8 lg:p-10"
         style={{
           transform: visible ? 'translate3d(0, 0, 0)' : 'translate3d(0, -8px, 0)',
           transition: 'transform 1.2s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -29,7 +29,7 @@ export function ProjectsEntry({ visible, onOpenProjects }: Props) {
       >
         <button
           type="button"
-          className="projects-entry ui-interactive px-4 py-2.5 leading-none transition-opacity duration-300 hover:opacity-80 sm:px-6 sm:py-3"
+          className="projects-entry ui-interactive relative z-10 min-h-11 touch-manipulation px-4 py-3 leading-none transition-opacity duration-300 hover:opacity-80 active:opacity-70 sm:min-h-0 sm:px-6 sm:py-3"
           data-testid="projects-entry"
           style={{
             fontFamily: displayFont,
@@ -41,6 +41,7 @@ export function ProjectsEntry({ visible, onOpenProjects }: Props) {
             background: 'rgba(255, 252, 245, 0.04)',
             border: `1px solid ${ui.ivoryBorder}`,
             borderRadius: 2,
+            WebkitTapHighlightColor: 'transparent',
           }}
           aria-label={site.projectsLabel}
           onClick={onOpenProjects}

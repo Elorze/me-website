@@ -6,5 +6,5 @@ export const site = {
   lang: 'zh-CN',
   title: '云展',
   name: '云展',
-  projectsLabel: '项目介绍',
+  projectsLabel: '项目经历',
 } as const
