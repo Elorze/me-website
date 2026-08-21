@@ -1,9 +1,13 @@
 import { HeroScene } from '@/components/hero/HeroScene'
 
+type Props = {
+  onOpenProjects?: () => void
+  skipIntro?: boolean
+}
+
 /**
- * Homepage — currently a single immersive hero.
- * Add sections / routes here as the site grows.
+ * Homepage — immersive Guilin hero.
  */
-export function HomePage() {
-  return <HeroScene />
+export function HomePage({ onOpenProjects, skipIntro }: Props) {
+  return <HeroScene onOpenProjects={onOpenProjects} skipIntro={skipIntro} />
 }

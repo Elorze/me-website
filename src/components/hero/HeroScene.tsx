@@ -15,16 +15,23 @@ function easeDawnRing(t: number) {
   return Math.pow(eased, 0.58)
 }
 
+type Props = {
+  onOpenProjects?: () => void
+  /** Skip doorway / dawn when returning from archive */
+  skipIntro?: boolean
+}
+
 /**
  * Immersive Guilin hero:
  * brief black → doorway + light ring → quiet projects entry.
  */
-export function HeroScene() {
+export function HeroScene({ onOpenProjects, skipIntro = false }: Props) {
   const reduced = usePrefersReducedMotion()
   const parallax = usePointerParallax({ strength: 1, ease: 0.07 })
-  const [intro, setIntro] = useState(reduced ? 1 : 0)
-  const [sunrise, setSunrise] = useState(reduced ? 1 : 0)
-  const [entryVisible, setEntryVisible] = useState(reduced)
+  const startSettled = reduced || skipIntro
+  const [intro, setIntro] = useState(startSettled ? 1 : 0)
+  const [sunrise, setSunrise] = useState(startSettled ? 1 : 0)
+  const [entryVisible, setEntryVisible] = useState(startSettled)
 
   const mouse = useMemo(
     () => ({ x: parallax.x, y: -parallax.y }),
@@ -32,7 +39,7 @@ export function HeroScene() {
   )
 
   useEffect(() => {
-    if (reduced) {
+    if (startSettled) {
       setIntro(1)
       setSunrise(1)
       setEntryVisible(true)
@@ -71,10 +78,10 @@ export function HeroScene() {
       cancelAnimationFrame(raf)
       if (entryTimer !== undefined) window.clearTimeout(entryTimer)
     }
-  }, [reduced])
+  }, [startSettled])
 
   return (
-    <section className="relative h-screen w-full overflow-hidden bg-ink">
+    <section className="relative h-dvh w-full overflow-hidden bg-ink">
       <div className="absolute inset-0">
         <DepthParallaxStage
           mouse={mouse}
@@ -83,7 +90,7 @@ export function HeroScene() {
           reduced={reduced}
         />
       </div>
-      <ProjectsEntry visible={entryVisible} />
+      <ProjectsEntry visible={entryVisible} onOpenProjects={onOpenProjects} />
       <SceneCursor enabled={!reduced && intro > 0.35} />
     </section>
   )
